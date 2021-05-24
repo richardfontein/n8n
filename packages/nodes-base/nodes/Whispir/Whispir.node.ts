@@ -224,6 +224,10 @@ export class Whispir implements INodeType {
     };
 
     async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+        const items = this.getInputData();
+        const returnData: IDataObject[] = [];
+        const length = (items.length as unknown) as number;
+        const qs: IDataObject = {};
         let responseData;
         const resource = this.getNodeParameter('resource', 0) as string;
         const operation = this.getNodeParameter('operation', 0) as string;
@@ -240,75 +244,83 @@ export class Whispir implements INodeType {
         const workspaceId = this.getNodeParameter('workspaceId', 0) as string;
         const workspaceIdUri = `${workspaceId !== undefined ? `workspaces/${workspaceId}/` : ''}`
 
-        if (resource === 'contact') {
-            if (operation === 'get') {
+        for (let i = 0; i < length; i++) {
 
-                // get contactId input
-                const contactId = this.getNodeParameter('contactId', 0) as string;
+            if (resource === 'contact') {
+                if (operation === 'get') {
 
-                //Make http request according to <https://sendgrid.com/docs/api-reference/>
-                const options: OptionsWithUri = {
-                    headers: {
-                        'Accept': 'application/vnd.whispir.contact-v1+json',
-                        'x-api-key': `${credentials.apiKey}`,
-                        'Authorization': `Bearer ${authToken}`,
-                    },
-                    method: 'GET',
-                    uri: `https://api.au.whispir.com/${workspaceIdUri}contacts/${contactId}`,
-                    json: true,
-                };
+                    // get contactId input
+                    const contactId = this.getNodeParameter('contactId', i) as string;
 
-                responseData = await this.helpers.request(options);
+                    //Make http request according to <https://sendgrid.com/docs/api-reference/>
+                    const options: OptionsWithUri = {
+                        headers: {
+                            'Accept': 'application/vnd.whispir.contact-v1+json',
+                            'x-api-key': `${credentials.apiKey}`,
+                            'Authorization': `Bearer ${authToken}`,
+                        },
+                        method: 'GET',
+                        uri: `https://api.au.whispir.com/${workspaceIdUri}contacts/${contactId}`,
+                        json: true,
+                    };
+
+                    responseData = await this.helpers.request(options);
+                }
+            } else if (resource === 'distributionList') {
+                if (operation === 'get') {
+
+                    // get distributionId input
+                    const distributionListId = this.getNodeParameter('distributionListId', i) as string;
+
+                    //Make http request according to <https://sendgrid.com/docs/api-reference/>
+                    const options: OptionsWithUri = {
+                        headers: {
+                            'Accept': 'application/vnd.whispir.distributionlist-v1+json',
+                            'x-api-key': `${credentials.apiKey}`,
+                            'Authorization': `Bearer ${authToken}`,
+                        },
+                        method: 'GET',
+                        uri: `https://api.au.whispir.com/${workspaceIdUri}distributionlists/${distributionListId}`,
+                        json: true,
+                    };
+
+                    responseData = await this.helpers.request(options);
+                }
+            } else if (resource === 'message') {
+                if (operation === 'post') {
+                    const to = this.getNodeParameter('to', i) as string;
+                    const subject = this.getNodeParameter('subject', i) as string;
+                    const body = this.getNodeParameter('body', i) as string;
+
+                    //Make http request according to <https://sendgrid.com/docs/api-reference/>
+                    const options: OptionsWithUri = {
+                        headers: {
+                            'Accept': 'application/vnd.whispir.message-v1+json',
+                            'Content-Type': 'application/vnd.whispir.message-v1+json',
+                            'x-api-key': `${credentials.apiKey}`,
+                            'Authorization': `Bearer ${authToken}`,
+                        },
+                        body: {
+                            to,
+                            body,
+                            subject,
+                        },
+                        method: 'POST',
+                        uri: `https://api.au.whispir.com/workspaces/${workspaceId}/messages`,
+                        json: true,
+                    };
+
+                    responseData = await this.helpers.request(options);
+                }
             }
-        } else if (resource === 'distributionList') {
-            if (operation === 'get') {
-
-                // get distributionId input
-                const distributionListId = this.getNodeParameter('distributionListId', 0) as string;
-
-                //Make http request according to <https://sendgrid.com/docs/api-reference/>
-                const options: OptionsWithUri = {
-                    headers: {
-                        'Accept': 'application/vnd.whispir.distributionlist-v1+json',
-                        'x-api-key': `${credentials.apiKey}`,
-                        'Authorization': `Bearer ${authToken}`,
-                    },
-                    method: 'GET',
-                    uri: `https://api.au.whispir.com/${workspaceIdUri}distributionlists/${distributionListId}`,
-                    json: true,
-                };
-
-                responseData = await this.helpers.request(options);
-            }
-        } else if (resource === 'message') {
-            if (operation === 'post') {
-                const to = this.getNodeParameter('to', 0) as string;
-                const subject = this.getNodeParameter('subject', 0) as string;
-                const body = this.getNodeParameter('body', 0) as string;
-
-                //Make http request according to <https://sendgrid.com/docs/api-reference/>
-                const options: OptionsWithUri = {
-                    headers: {
-                        'Accept': 'application/vnd.whispir.message-v1+json',
-                        'Content-Type': 'application/vnd.whispir.message-v1+json',
-                        'x-api-key': `${credentials.apiKey}`,
-                        'Authorization': `Bearer ${authToken}`,
-                    },
-                    body: {
-                        to,
-                        body,
-                        subject,
-                    },
-                    method: 'POST',
-                    uri: `https://api.au.whispir.com/workspaces/${workspaceId}/messages`,
-                    json: true,
-                };
-
-                responseData = await this.helpers.request(options);
+            if (Array.isArray(responseData)) {
+                returnData.push.apply(returnData, responseData as IDataObject[]);
+            } else {
+                returnData.push(responseData as IDataObject);
             }
         }
 
         // Map data to n8n data
-        return [this.helpers.returnJsonArray(responseData)];
+        return [this.helpers.returnJsonArray(returnData)];
     }
 }
