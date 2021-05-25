@@ -131,8 +131,8 @@ export class Whispir implements INodeType {
                 description: 'ID for the workspace',
             },
             {
-                displayName: 'Contact ID',
-                name: 'contactId',
+                displayName: 'ID',
+                name: 'id',
                 type: 'string',
                 required: true,
                 displayOptions: {
@@ -142,29 +142,12 @@ export class Whispir implements INodeType {
                         ],
                         resource: [
                             'contact',
-                        ],
-                    },
-                },
-                default: '',
-                description: 'ID for the contact',
-            },
-            {
-                displayName: 'Distribution List ID',
-                name: 'distributionListId',
-                type: 'string',
-                required: true,
-                displayOptions: {
-                    show: {
-                        operation: [
-                            'get',
-                        ],
-                        resource: [
                             'distributionList',
                         ],
                     },
                 },
                 default: '',
-                description: 'ID for the distribution list',
+                description: 'ID for the resource',
             },
             {
                 displayName: 'To',
@@ -250,7 +233,7 @@ export class Whispir implements INodeType {
                 if (operation === 'get') {
 
                     // get contactId input
-                    const contactId = this.getNodeParameter('contactId', i) as string;
+                    const contactId = this.getNodeParameter('id', i) as string;
 
                     //Make http request according to <https://sendgrid.com/docs/api-reference/>
                     const options: OptionsWithUri = {
@@ -270,7 +253,7 @@ export class Whispir implements INodeType {
                 if (operation === 'get') {
 
                     // get distributionId input
-                    const distributionListId = this.getNodeParameter('distributionListId', i) as string;
+                    const distributionListId = this.getNodeParameter('id', i) as string;
 
                     //Make http request according to <https://sendgrid.com/docs/api-reference/>
                     const options: OptionsWithUri = {
